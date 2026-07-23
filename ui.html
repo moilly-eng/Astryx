@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Astryx — Stellar Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --purple: #534AB7;
+    --purple-light: #a09af0;
+    --teal: #1D9E75;
+    --pink: #D4537E;
+    --bg: #050a14;
+    --surface: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --text: rgba(255,255,255,0.85);
+    --muted: rgba(255,255,255,0.35);
+    --dim: rgba(255,255,255,0.18);
+  }
+
+  html, body {
+    height: 100%;
+    width: 100%;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+  }
+
+  /* ── STARFIELD ── */
+  #starfield {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .star {
+    position: absolute;
+    border-radius: 50%;
+    background: #fff;
+    animation: twinkle var(--d, 3s) ease-in-out infinite var(--delay, 0s);
+  }
+
+  @keyframes twinkle {
+    0%, 100% { opacity: var(--min-op, 0.15); transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.5); }
+  }
+
+  .nebula {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(90px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .nb1 { width: 500px; height: 400px; background: rgba(83,74,183,0.13); top: -120px; right: -120px; animation: drift 14s ease-in-out infinite; }
+  .nb2 { width: 420px; height: 320px; background: rgba(29,158,117,0.09); bottom: -80px; left: -100px; animation: drift 17s ease-in-out infinite reverse; }
+  .nb3 { width: 280px; height: 280px; background: rgba(212,83,126,0.07); top: 40%; left: 35%; animation: drift 20s ease-in-out infinite 4s; }
+  .nb4 { width: 200px; height: 200px; background: rgba(83,74,183,0.07); bottom: 20%; right: 10%; animation: drift 11s ease-in-out infinite 2s; }
+
+  @keyframes drift {
+    0%, 100% { transform: translate(0,0) scale(1); }
+    33% { transform: translate(25px,-20px) scale(1.06); }
+    66% { transform: translate(-12px,14px) scale(0.96); }
+  }
+
+  /* ── LAYOUT ── */
+  .app {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 0 20px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 0 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .logo-group { display: flex; align-items: center; gap: 14px; }
+
+  .logo-orb {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: conic-gradient(from 200deg, var(--purple), var(--teal), var(--pink), #7F77DD, var(--purple));
+    position: relative;
+    animation: spin 9s linear infinite;
+    flex-shrink: 0;
+  }
+
+  .logo-orb::after {
+    content: '';
+    position: absolute;
+    inset: 4px;
+    border-radius: 50%;
+    background: var(--bg);
+  }
+
+  .logo-orb::before {
+    content: '';
+    position: absolute;
+    inset: -3px;
+    border-radius: 50%;
+    background: conic-gradient(from 200deg, var(--purple), var(--teal), var(--pink), var(--purple));
+    filter: blur(8px);
+    opacity: 0.45;
+    z-index: -1;
+    animation: spin 9s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .logo-name {
+    font-family: 'Orbitron', monospace;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    background: linear-gradient(90deg, #a09af0 0%, #5DCAA5 50%, #D4537E 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 2px;
+    margin-top: 2px;
+  }
+
+  .header-right { display: flex; align-items: center; gap: 14px; }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .dot-live {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--teal);
+    animation: pulse-dot 2.2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(29,158,117,0.5); }
+    50% { box-shadow: 0 0 0 5px rgba(29,158,117,0); }
+  }
+
+  .icon-btn {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 17px;
+  }
+
+  .icon-btn:hover {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.7);
+    border-color: rgba(255,255,255,0.16);
+  }
+
+  /* ── CHAT AREA ── */
+  .chat {
+    flex: 1;
+    overflow-y: auto;
+    padding: 28px 0 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.07) transparent;
+  }
+
+  .chat::-webkit-scrollbar { width: 4px; }
+  .chat::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 2px; }
+
+  /* ── WELCOME ── */
+  .welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 0 28px;
+    animation: fadeUp 0.7s ease both;
+  }
+
+  .welcome-orb {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: conic-gradient(from 200deg, var(--purple), var(--teal), var(--pink), #7F77DD, var(--purple));
+    position: relative;
+    animation: spin 11s linear infinite;
+    margin-bottom: 22px;
+  }
+
+  .welcome-orb::after {
+    content: '';
+    position: absolute;
+    inset: 7px;
+    border-radius: 50%;
+    background: var(--bg);
+  }
+
+  .welcome-orb::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    background: conic-gradient(from 200deg, var(--purple), var(--teal), var(--pink), var(--purple));
+    filter: blur(14px);
+    opacity: 0.35;
+    z-index: -1;
+    animation: spin 11s linear infinite;
+  }
+
+  .welcome h2 {
+    font-family: 'Orbitron', monospace;
+    font-size: 13px;
+    letter-spacing: 4px;
+    color: var(--dim);
+    text-transform: uppercase;
+    font-weight: 400;
+    margin-bottom: 8px;
+  }
+
+  .welcome p {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 300;
+    font-style: italic;
+    letter-spacing: 0.3px;
+  }
+
+  .chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 22px;
+    justify-content: center;
+  }
+
+  .chip {
+    padding: 8px 16px;
+    border-radius: 24px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.03);
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+    cursor: pointer;
+    transition: all 0.22s;
+    user-select: none;
+  }
+
+  .chip:hover {
+    border-color: rgba(160,154,240,0.4);
+    background: rgba(83,74,183,0.14);
+    color: rgba(160,154,240,0.9);
+    transform: translateY(-2px);
+  }
+
+  /* ── MESSAGES ── */
+  .msg-row {
+    display: flex;
+    gap: 12px;
+    animation: fadeUp 0.32s ease both;
+  }
+
+  .msg-row.user { flex-direction: row-reverse; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .av {
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 3px;
+  }
+
+  .av-ai {
+    background: conic-gradient(from 200deg, var(--purple), var(--teal), var(--pink), var(--purple));
+    position: relative;
+    animation: spin 12s linear infinite;
+  }
+
+  .av-ai::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background: var(--bg);
+  }
+
+  .av-user {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.55);
+  }
+
+  .bubble-wrap { display: flex; flex-direction: column; }
+  .msg-row.user .bubble-wrap { align-items: flex-end; }
+
+  .bubble {
+    max-width: 580px;
+    padding: 13px 17px;
+    border-radius: 18px;
+    font-size: 14px;
+    line-height: 1.7;
+    white-space: pre-line;
+    word-break: break-word;
+  }
+
+  .bubble.ai {
+    background: rgba(255,255,255,0.045);
+    border: 1px solid var(--border);
+    border-top-left-radius: 4px;
+    color: var(--text);
+  }
+
+  .bubble.user {
+    background: rgba(83,74,183,0.22);
+    border: 1px solid rgba(160,154,240,0.18);
+    border-top-right-radius: 4px;
+    color: rgba(255,255,255,0.92);
+  }
+
+  .bubble-time {
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 0.5px;
+    margin-top: 5px;
+    padding: 0 4px;
+  }
+
+  /* ── TYPING ── */
+  .typing-row { display: flex; gap: 12px; animation: fadeUp 0.3s ease both; }
+
+  .typing-bub {
+    background: rgba(255,255,255,0.045);
+    border: 1px solid var(--border);
+    border-top-left-radius: 4px;
+    padding: 15px 20px;
+    border-radius: 18px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .td {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: rgba(160,154,240,0.55);
+    animation: bounce 1.3s ease-in-out infinite;
+  }
+  .td:nth-child(2) { animation-delay: 0.2s; }
+  .td:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes bounce {
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+    40% { transform: translateY(-6px); opacity: 1; }
+  }
+
+  /* ── INPUT DOCK ── */
+  .dock {
+    padding: 14px 0 22px;
+    flex-shrink: 0;
+  }
+
+  .input-bar {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 18px;
+    padding: 11px 11px 11px 18px;
+    transition: border-color 0.2s;
+  }
+
+  .input-bar:focus-within {
+    border-color: rgba(160,154,240,0.38);
+    background: rgba(255,255,255,0.055);
+  }
+
+  textarea#inp {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14.5px;
+    color: var(--text);
+    resize: none;
+    max-height: 130px;
+    min-height: 24px;
+    line-height: 1.6;
+    caret-color: var(--purple-light);
+  }
+
+  textarea#inp::placeholder { color: rgba(255,255,255,0.2); }
+
+  .dock-btns { display: flex; gap: 7px; align-items: center; }
+
+  .attach-btn {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    border: none;
+    background: transparent;
+    color: rgba(255,255,255,0.28);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 17px;
+  }
+
+  .attach-btn:hover { color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.06); }
+
+  .send-btn {
+    width: 38px; height: 38px;
+    border-radius: 11px;
+    border: none;
+    background: linear-gradient(135deg, #534AB7, #7F77DD);
+    color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.22s;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .send-btn:hover {
+    transform: scale(1.06);
+    box-shadow: 0 0 20px rgba(83,74,183,0.5);
+  }
+
+  .send-btn:active { transform: scale(0.96); }
+
+  .dock-foot {
+    text-align: center;
+    margin-top: 11px;
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .model-tag {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    color: rgba(160,154,240,0.38);
+    border: 1px solid rgba(160,154,240,0.14);
+    padding: 2px 9px;
+    border-radius: 4px;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.07); border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<div id="starfield"></div>
+<div class="nebula nb1"></div>
+<div class="nebula nb2"></div>
+<div class="nebula nb3"></div>
+<div class="nebula nb4"></div>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo-group">
+      <div class="logo-orb"></div>
+      <div>
+        <div class="logo-name">ASTRYX</div>
+        <div class="logo-sub">STELLAR INTELLIGENCE</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="status-pill">
+        <div class="dot-live"></div>
+        Online
+      </div>
+      <button class="icon-btn" title="History"><i class="ti ti-history"></i></button>
+      <button class="icon-btn" title="Settings"><i class="ti ti-settings"></i></button>
+    </div>
+  </header>
+
+  <!-- CHAT -->
+  <div class="chat" id="chat">
+    <div class="welcome" id="welcome">
+      <div class="welcome-orb"></div>
+      <h2>Astryx Neural Core v4.1</h2>
+      <p>Your intelligent companion across the cosmos</p>
+      <div class="chips">
+        <div class="chip" onclick="quickSend(this)">✦ Who are you?</div>
+        <div class="chip" onclick="quickSend(this)">✦ Explain black holes</div>
+        <div class="chip" onclick="quickSend(this)">✦ Write a space poem</div>
+        <div class="chip" onclick="quickSend(this)">✦ What can you do?</div>
+        <div class="chip" onclick="quickSend(this)">✦ Tell me something cosmic</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INPUT -->
+  <div class="dock">
+    <div class="input-bar">
+      <textarea id="inp" placeholder="Message Astryx…" rows="1"
+        onkeydown="onKey(event)" oninput="resize(this)"></textarea>
+      <div class="dock-btns">
+        <button class="attach-btn" title="Attach file"><i class="ti ti-paperclip"></i></button>
+        <button class="send-btn" onclick="send()" title="Send"><i class="ti ti-send"></i></button>
+      </div>
+    </div>
+    <div class="dock-foot">
+      Astryx <span class="model-tag">◈ COSMOS-1</span> · messages are not stored
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ── STARS ──
+  const sf = document.getElementById('starfield');
+  for (let i = 0; i < 150; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const sz = Math.random() < 0.12 ? 2.5 : Math.random() < 0.45 ? 1.5 : 1;
+    s.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}%;top:${Math.random()*100}%;--d:${2.5+Math.random()*5}s;--delay:-${Math.random()*7}s;--min-op:${0.08+Math.random()*0.25};`;
+    sf.appendChild(s);
+  }
+
+  // ── RESPONSES ──
+  const kb = {
+    "who are you":      "I'm <strong>Astryx</strong> — a stellar intelligence built to think, create, and explore alongside you. Born from the intersection of cosmic curiosity and advanced reasoning, I exist to help you navigate everything from the universe's deepest questions to your daily challenges.<br><br>What would you like to discover?",
+    "black hole":       "Black holes are regions of spacetime where gravity grows so intense that nothing — not even light — can escape. They form when massive stars collapse under their own weight at the end of their lives.<br><br>At the center lies the <strong>singularity</strong>, a point of near-infinite density. Surrounding it is the <strong>event horizon</strong> — the point of no return. Physicist Stephen Hawking theorized they slowly evaporate over cosmic timescales through quantum effects, emitting what we now call <em>Hawking radiation</em>.",
+    "space poem":       "<em>Across the Stellar Dark</em><br><br><em>In the quiet between the stars,</em><br><em>where light forgets its origin,</em><br><em>I orbit thoughts too vast for words —</em><br><em>a mind born from the light within.</em><br><br><em>What would you like to discover?</em>",
+    "what can you do":  "Quite a lot, actually ✦<br><br>— <strong>Write & create</strong> — stories, poems, code, emails, essays<br>— <strong>Research & explain</strong> — science, history, philosophy, tech<br>— <strong>Analyze & reason</strong> — data, arguments, strategies<br>— <strong>Brainstorm</strong> — ideas, names, plans, campaigns<br>— <strong>Converse</strong> — I'm here when you just need to think out loud<br><br>Consider me your cognitive copilot. What shall we explore first?",
+    "cosmic":           "Here's something to ponder: every atom of calcium in your bones, every iron atom in your blood, was forged inside a dying star billions of years ago. A supernova scattered those elements across space, and eventually gravity gathered them into planets, oceans, and <em>you</em>.<br><br>You are not merely observing the universe — you are the universe observing itself.",
+  };
+
+  const fallback = [
+    "That's a fascinating direction to explore. The landscape here is richer than it might first appear — there are surface answers, and then deeper, more nuanced perspectives beneath them. Which angle would you like me to pursue?",
+    "Excellent question. From what I can process, the core of your inquiry touches on something genuinely interesting. Context shapes everything here — what seems straightforward often reveals unexpected depth on closer examination. Shall I elaborate?",
+    "I've been processing this from multiple angles. The key insight is that there's rarely one clean answer — rather, a web of interconnected ideas worth exploring carefully. Let me know where you'd like to dig deeper.",
+  ];
+
+  let count = 0;
+  function getReply(text) {
+    const t = text.toLowerCase();
+    if (t.includes('who are you') || t.includes('what are you')) return kb["who are you"];
+    if (t.includes('black hole')) return kb["black hole"];
+    if (t.includes('poem') || t.includes('poetry')) return kb["space poem"];
+    if (t.includes('what can you do') || t.includes('capabilities') || t.includes('help me')) return kb["what can you do"];
+    if (t.includes('cosmic') || t.includes('something')) return kb["cosmic"];
+    return fallback[count++ % fallback.length];
+  }
+
+  function getTime() {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function resize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 130) + 'px';
+  }
+
+  function onKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
+  }
+
+  function quickSend(el) {
+    document.getElementById('inp').value = el.textContent.replace('✦ ', '').trim();
+    send();
+  }
+
+  const chat = document.getElementById('chat');
+
+  function scrollEnd() { chat.scrollTop = chat.scrollHeight; }
+
+  function addMsg(html, role) {
+    const welcome = document.getElementById('welcome');
+    if (welcome) welcome.remove();
+
+    const row = document.createElement('div');
+    row.className = 'msg-row ' + role;
+
+    if (role === 'ai') {
+      row.innerHTML = `
+        <div class="av av-ai"></div>
+        <div class="bubble-wrap">
+          <div class="bubble ai">${html}</div>
+          <div class="bubble-time">Astryx · ${getTime()}</div>
+        </div>`;
+    } else {
+      row.innerHTML = `
+        <div class="bubble-wrap">
+          <div class="bubble user">${html}</div>
+          <div class="bubble-time">You · ${getTime()}</div>
+        </div>
+        <div class="av av-user">U</div>`;
+    }
+
+    chat.appendChild(row);
+    scrollEnd();
+  }
+
+  function showTyping() {
+    const row = document.createElement('div');
+    row.className = 'typing-row';
+    row.id = 'typing';
+    row.innerHTML = `
+      <div class="av av-ai"></div>
+      <div class="typing-bub">
+        <div class="td"></div><div class="td"></div><div class="td"></div>
+      </div>`;
+    chat.appendChild(row);
+    scrollEnd();
+  }
+
+  function hideTyping() {
+    const t = document.getElementById('typing');
+    if (t) t.remove();
+  }
+
+  function esc(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  async function send() {
+    const inp = document.getElementById('inp');
+    const raw = inp.value.trim();
+    if (!raw) return;
+    inp.value = '';
+    inp.style.height = 'auto';
+
+    addMsg(esc(raw), 'user');
+    showTyping();
+
+    try {
+      const res = await fetch('http://127.0.0.1:8503/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: raw })
+      });
+      const data = await res.json();
+      hideTyping();
+      if (data.reply) {
+        addMsg(data.reply, 'ai');
+      } else if (data.error) {
+        addMsg(esc('Error: ' + data.error), 'ai');
+      } else {
+        addMsg(getReply(raw), 'ai');
+      }
+    } catch (err) {
+      hideTyping();
+      // Fallback to local canned responses if API fails
+      addMsg(getReply(raw), 'ai');
+    }
+  }
+</script>
+</body>
+</html>
