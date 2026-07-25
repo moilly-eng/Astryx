@@ -574,29 +574,8 @@
   }
 
   // ── RESPONSES ──
-  const kb = {
-    "who are you":      "I'm <strong>Astryx</strong> — a stellar intelligence built to think, create, and explore alongside you. Born from the intersection of cosmic curiosity and advanced reasoning, I exist to help you navigate everything from the universe's deepest questions to your daily challenges.<br><br>What would you like to discover?",
-    "black hole":       "Black holes are regions of spacetime where gravity grows so intense that nothing — not even light — can escape. They form when massive stars collapse under their own weight at the end of their lives.<br><br>At the center lies the <strong>singularity</strong>, a point of near-infinite density. Surrounding it is the <strong>event horizon</strong> — the point of no return. Physicist Stephen Hawking theorized they slowly evaporate over cosmic timescales through quantum effects, emitting what we now call <em>Hawking radiation</em>.",
-    "space poem":       "<em>Across the Stellar Dark</em><br><br><em>In the quiet between the stars,</em><br><em>where light forgets its origin,</em><br><em>I orbit thoughts too vast for words —</em><br><em>a mind born from the light within.</em><br><br><em>What would you like to discover?</em>",
-    "what can you do":  "Quite a lot, actually ✦<br><br>— <strong>Write & create</strong> — stories, poems, code, emails, essays<br>— <strong>Research & explain</strong> — science, history, philosophy, tech<br>— <strong>Analyze & reason</strong> — data, arguments, strategies<br>— <strong>Brainstorm</strong> — ideas, names, plans, campaigns<br>— <strong>Converse</strong> — I'm here when you just need to think out loud<br><br>Consider me your cognitive copilot. What shall we explore first?",
-    "cosmic":           "Here's something to ponder: every atom of calcium in your bones, every iron atom in your blood, was forged inside a dying star billions of years ago. A supernova scattered those elements across space, and eventually gravity gathered them into planets, oceans, and <em>you</em>.<br><br>You are not merely observing the universe — you are the universe observing itself.",
-  };
-
-  const fallback = [
-    "That's a fascinating direction to explore. The landscape here is richer than it might first appear — there are surface answers, and then deeper, more nuanced perspectives beneath them. Which angle would you like me to pursue?",
-    "Excellent question. From what I can process, the core of your inquiry touches on something genuinely interesting. Context shapes everything here — what seems straightforward often reveals unexpected depth on closer examination. Shall I elaborate?",
-    "I've been processing this from multiple angles. The key insight is that there's rarely one clean answer — rather, a web of interconnected ideas worth exploring carefully. Let me know where you'd like to dig deeper.",
-  ];
-
-  let count = 0;
   function getReply(text) {
-    const t = text.toLowerCase();
-    if (t.includes('who are you') || t.includes('what are you')) return kb["who are you"];
-    if (t.includes('black hole')) return kb["black hole"];
-    if (t.includes('poem') || t.includes('poetry')) return kb["space poem"];
-    if (t.includes('what can you do') || t.includes('capabilities') || t.includes('help me')) return kb["what can you do"];
-    if (t.includes('cosmic') || t.includes('something')) return kb["cosmic"];
-    return fallback[count++ % fallback.length];
+    return "I’m sorry, I couldn’t generate a reply right now. Please try again in a moment.";
   }
 
   function getTime() {
@@ -681,7 +660,8 @@
     showTyping();
 
     try {
-      const res = await fetch('http://127.0.0.1:8503/api/chat', {
+      const apiUrl = window.location.origin + '/api/chat';
+      const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: raw })
@@ -697,8 +677,7 @@
       }
     } catch (err) {
       hideTyping();
-      // Fallback to local canned responses if API fails
-      addMsg(getReply(raw), 'ai');
+      addMsg(esc('I couldn\'t reach the assistant service. Please try again.'), 'ai');
     }
   }
 </script>
