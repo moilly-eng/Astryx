@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Astryx — Stellar Intelligence</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
@@ -78,7 +78,13 @@
     z-index: 1;
     display: flex;
     flex-direction: column;
+    /* 100vh doesn't shrink when the mobile keyboard opens, which is what was
+       causing the input dock to end up hidden behind the keyboard.
+       100dvh (dynamic viewport height) tracks the *visible* viewport instead.
+       --app-height is a JS fallback for older browsers without dvh support. */
     height: 100vh;
+    height: 100dvh;
+    height: var(--app-height, 100dvh);
     max-width: 820px;
     margin: 0 auto;
     padding: 0 20px;
@@ -200,6 +206,9 @@
     gap: 22px;
     scrollbar-width: thin;
     scrollbar-color: rgba(255,255,255,0.07) transparent;
+    /* prevents the chat area collapsing to 0 height in some mobile flexbox
+       edge cases when the keyboard opens */
+    min-height: 0;
   }
 
   .chat::-webkit-scrollbar { width: 4px; }
@@ -425,7 +434,10 @@
     border: none;
     outline: none;
     font-family: 'DM Sans', sans-serif;
-    font-size: 14.5px;
+    /* iOS Safari auto-zooms the page on focus if the input's font-size is
+       under 16px. 14.5px was triggering that zoom, which made the layout
+       jump on top of the keyboard-covers-input issue. */
+    font-size: 16px;
     color: var(--text);
     resize: none;
     max-height: 130px;
@@ -563,6 +575,22 @@
 </div>
 
 <script>
+  // ── MOBILE KEYBOARD FIX ──
+  // visualViewport reports the actually-visible area (shrinks when the
+  // keyboard opens). We use it to set a CSS var (--app-height) that the
+  // .app container reads, so the whole layout resizes to fit above the
+  // keyboard instead of the dock ending up hidden behind it.
+  function setAppHeight() {
+    const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+    document.documentElement.style.setProperty('--app-height', h + 'px');
+  }
+  setAppHeight();
+  window.addEventListener('resize', setAppHeight);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', setAppHeight);
+    window.visualViewport.addEventListener('scroll', setAppHeight);
+  }
+
   // ── STARS ──
   const sf = document.getElementById('starfield');
   for (let i = 0; i < 150; i++) {
@@ -648,6 +676,14 @@
   function esc(s) {
     return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
+
+  // Extra safety net: scroll the input into view whenever it's focused.
+  document.getElementById('inp').addEventListener('focus', () => {
+    setTimeout(() => {
+      document.getElementById('inp').scrollIntoView({ block: 'center', behavior: 'smooth' });
+      scrollEnd();
+    }, 300);
+  });
 
   async function send() {
     const inp = document.getElementById('inp');
