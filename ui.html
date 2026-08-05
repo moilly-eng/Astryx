@@ -74,6 +74,20 @@
   .nb3 { width: 280px; height: 280px; background: rgba(212,83,126,0.07); top: 40%; left: 35%; animation: drift 20s ease-in-out infinite 4s; }
   .nb4 { width: 200px; height: 200px; background: rgba(83,74,183,0.07); bottom: 20%; right: 10%; animation: drift 11s ease-in-out infinite 2s; }
 
+  /* Nebula blur + animation is expensive to repaint. Pausing it while the
+     keyboard is open/animating (body.kb-open, toggled in JS) removes the
+     biggest source of jank at exactly the moment scroll + resize + keyboard
+     animation are all competing for the main thread on Android. */
+  body.kb-open .nebula,
+  body.kb-open .star,
+  body.kb-open .logo-orb,
+  body.kb-open .logo-orb::before,
+  body.kb-open .welcome-orb,
+  body.kb-open .welcome-orb::before,
+  body.kb-open .av-ai {
+    animation-play-state: paused !important;
+  }
+
   @keyframes drift {
     0%, 100% { transform: translate(0,0) scale(1); }
     33% { transform: translate(25px,-20px) scale(1.06); }
@@ -424,6 +438,11 @@
     flex-shrink: 0;
     /* Subtle top fade to blend with chat content scrolling under it */
     box-shadow: 0 -24px 32px 8px var(--bg);
+    /* Isolates the dock's own paint/layout from the rest of the page during
+       scroll, so the browser doesn't recompute the whole document on every
+       sticky-position recalculation. */
+    contain: layout paint;
+    will-change: transform;
   }
 
   .input-bar {
@@ -598,14 +617,21 @@
   // so the input stays in the visible area.
   function scrollInputIntoView() {
     const inp = document.getElementById('inp');
+    // 'auto' (instant) instead of 'smooth' — a smooth animated scroll adds
+    // its own repaint work on top of the keyboard animation + resize +
+    // paused decorative animations already competing for the frame budget.
     if (inp) {
-      inp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      inp.scrollIntoView({ behavior: 'auto', block: 'nearest' });
     }
   }
 
   // ── STARS ──
+  // Fewer stars on small/mobile screens — 150 was fine on desktop but adds
+  // real repaint cost on mid-range Android GPUs, especially layered on top
+  // of the nebula blur and keyboard animation.
+  const STAR_COUNT = window.innerWidth < 640 ? 60 : 150;
   const sf = document.getElementById('starfield');
-  for (let i = 0; i < 150; i++) {
+  for (let i = 0; i < STAR_COUNT; i++) {
     const s = document.createElement('div');
     s.className = 'star';
     const sz = Math.random() < 0.12 ? 2.5 : Math.random() < 0.45 ? 1.5 : 1;
@@ -639,7 +665,12 @@
   const chat = document.getElementById('chat');
 
   function scrollEnd() {
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    // Instant scroll, batched on the next frame — avoids stacking an
+    // animated scroll on top of the CSS transitions/animations already
+    // running (message fade-in, orb spin, typing dots).
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'auto' });
+    });
   }
 
   function addMsg(html, role) {
@@ -695,7 +726,16 @@
   // scroll the input into view. Because the page can now scroll freely,
   // scrollIntoView actually works here — no fixed/overflow:hidden fighting it.
   document.getElementById('inp').addEventListener('focus', () => {
+    // Pause decorative animations for the duration of the keyboard
+    // open/settle window — this is the actual fix for the Android lag.
+    document.body.classList.add('kb-open');
     setTimeout(scrollInputIntoView, 350);
+  });
+
+  document.getElementById('inp').addEventListener('blur', () => {
+    // Give the keyboard-close animation the same clear frame budget,
+    // then resume the starfield/orb animations.
+    setTimeout(() => document.body.classList.remove('kb-open'), 350);
   });
 
   async function send() {
