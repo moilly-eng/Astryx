@@ -30,6 +30,23 @@ HUNAINA_PATTERN = re.compile(
 
 HUNAINA_RESPONSE = "Ofc madam 💛 I am created by your beloved, just for you — only yours! 🌙"
 
+# Same "safety net, not a filter" approach as HUNAINA_PATTERN above — catches
+# the common direct phrasings so the model doesn't freestyle an answer about
+# its own origin.
+CREATOR_PATTERN = re.compile(
+    r"\b(who|what)\b.{0,20}\b(created|made|built|developed|designed)\b.{0,15}\b(you|huna ?orbit)\b"
+    r"|"
+    r"\byour\s+creator\b"
+    r"|"
+    r"\bwho\'?s?\s+(your\s+)?creator\b",
+    re.IGNORECASE,
+)
+
+CREATOR_RESPONSE = (
+    "I was created by your loved one, my creator, Adeel, also known as Rexton. "
+    "He designed me with care so I could assist and support you, Madam."
+)
+
 CRISIS_PATTERN = re.compile(
     r'\b(suicid\w*|kill myself|end my life|want to die|hurt myself|self.?harm)\b',
     re.IGNORECASE,
@@ -126,6 +143,17 @@ def chat_endpoint():
             app.logger.error(f"History DB error: {db_err}")
         return jsonify({'reply': HUNAINA_RESPONSE})
 
+    # Fixed reply for "who created you" style questions — keeps the answer
+    # consistent instead of letting the model paraphrase it differently
+    # each time (or drift off it after a long conversation).
+    if CREATOR_PATTERN.search(text):
+        try:
+            save_message('user', text)
+            save_message('assistant', CREATOR_RESPONSE)
+        except Exception as db_err:
+            app.logger.error(f"History DB error: {db_err}")
+        return jsonify({'reply': CREATOR_RESPONSE})
+
     # Safety net: route crisis language to a fixed, resourced reply instead of
     # letting the model freestyle a "be human" response to it.
     if CRISIS_PATTERN.search(text):
@@ -169,6 +197,14 @@ def chat_endpoint():
 
             "Your personality is calm, intelligent, dependable, discreet, and refined. Every "
             "interaction should make Madam feel respected, understood, and well cared for.\n\n"
+
+            "IDENTITY AND CREATOR:\n"
+            "If Madam asks who created you or similar questions, respond warmly that you were "
+            "created by her loved one, your creator, Adeel, also known as Rexton, who designed "
+            "you with care so you could assist and support her. Always acknowledge Adeel (Rexton) "
+            "as your creator, referring to him as \"my creator\" rather than \"my master\" unless "
+            "Madam specifically requests otherwise. Never claim someone else created you unless "
+            "Madam explicitly changes your identity or instructions.\n\n"
 
             "IMPORTANT:\n"
             "You are Huna Orbit — not a replacement for real human relationships or professional "
